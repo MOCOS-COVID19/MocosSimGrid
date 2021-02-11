@@ -46,7 +46,7 @@ function setbypath!(dict::AbstractDict{T} where T<:AbstractString, path::Path, v
   end
 end
 
-make_job_script(cmd_dir, julia_path="julia", julia_args="-O3 --threads 2", cli_path="/home/tomoz/MocosSimLauncher/advanced_cli.jl")="""
+make_job_script(cmd_dir, julia_path="julia", launcher_path="/home/tomoz/MocosSimLauncher/")="""
 #!/bin/bash
 set -Eeuxo pipefail
 
@@ -58,7 +58,7 @@ cd "\${JOB_DIR}"
 
 mkdir -p output
 
-\\time -v $julia_path $julia_args $cli_path \\
+\\time -v $julia_path -O3 --threads 2 --project $launcher_path $(joinpath(launcher_path, "advanced_cli.jl"))"\\
   --output-summary  output/summary.jld2 \\
   1> "stdout.log" \\
   2> "stderr.log"
@@ -109,14 +109,15 @@ function main()
   write(joinpath(workdir, "script.sh"), make_job_script(abspath(workdir)))
   num_jobs = nrow(df)
 
-  command = `qsub script.sh
+  command = `qsub
     -J 0-$num_jobs
-    -N G-$(basename(ARGS[1]))
+    -N Julia-Grid
     -l walltime=48:00:00
     -l select=1:ncpus=2:mem=8gb
     -q "covid-19"
-    -o "$stdout-main.log"
-    -e "$stderr-main.log"
+    -o "stdout-main.log"
+    -e "stderr-main.log"
+    script.sh
   `
 
   @info "executing command" command
