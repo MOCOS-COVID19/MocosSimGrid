@@ -377,3 +377,55 @@ function plot_heatmap_phone_tracking_usage_vs_tracking_prob(
   ylabel("b - skuteczność śledzenia kontaktów")
   return im
 end
+
+function plot_initiators_vs_c(results, initiators = 0:2:50, Cs=0:0.05:1; cmin=nothing, cmax=nothing, logscale=true, addcbar::Bool=true, polish::Bool=false)
+  #figure(figsize=(10,5))
+  reduction = 1 .- Cs / 1.35  |> collect
+
+  if nothing == cmax
+    cmax = maximum(results)
+  end
+
+  if nothing == cmin
+    cmin = minimum(results)
+  end
+
+  if logscale
+    img = pcolor(
+      extendrange(reduction),
+      extendrange(initiators),
+      results,
+      norm=matplotlib.colors.LogNorm(vmin=cmin, vmax=cmax),
+      cmap="nipy_spectral")
+      clim(vmin=cmin)
+  else
+    img = pcolor(
+      extendrange(reduction),
+      extendrange(initiators),
+      results,
+      norm=matplotlib.colors.Normalize(vmin=cmin, vmax=cmax),
+      cmap="nipy_spectral")
+  end
+
+  if addcbar
+    cbar = colorbar()
+  end
+
+  if polish
+    xlabel("f - stopień redukcji kontaktów")
+    ylabel("n - liczba początkowych zarażeń")
+  else
+    xlabel("f - contact reduction rate")
+    ylabel("n - number of initiators")
+  end
+
+  xticks(
+    0:0.1:1,
+    ["$(100*f)%" for f in 0:0.1:1],
+    rotation=60
+  )
+
+  #gca().invert_yaxis()
+  gca().invert_xaxis()
+  img
+end

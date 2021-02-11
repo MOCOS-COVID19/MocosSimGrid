@@ -38,13 +38,33 @@ end
 getbypath(dict::AbstractDict{T} where T<:AbstractString, path::Path) = getbypath(dict[path[1]], path[2:end])
 getbypath(val, ::Path) = val
 
-function setbypath!(dict::AbstractDict{T} where T<:AbstractString, path::Path, value::Real) 
+function setbypath!(dict::AbstractDict{T} where T<:AbstractString, path::Path, value::Real)
   if length(path) > 1
     setbypath!(dict[path[1]], path[2:end], value)
   else
     dict[only(path)] = value
   end
 end
+
+make_job_script(cmd_dir, julia_path="julia", julia_args="-O3 --threads 2", cli_path="/home/tomoz/MocosSimLauncher/advanced_cli.jl")="""
+#!/bin/bash
+set -Eeuxo pipefail
+
+cd $cmd_dir
+
+JOB_IDX=`expr \$PBS_ARRAY_INDEX + 1`
+JOB_DIR=`tail -n+"\${JOB_IDX}" jobdirs.txt | head -n1`
+cd "\${JOB_DIR}"
+
+mkdir -p output
+
+\\time -v $julia_path $julia_args $cli_path \\
+  --output-summary  output/summary.jld2 \\
+  1> "stdout.log" \\
+  2> "stderr.log"
+
+touch "_SUCCESS"
+"""
 
 function main()
   @assert length(ARGS) > 0 "JSON file needed"
@@ -57,7 +77,7 @@ function main()
 
   @info "ranges are" rangepaths ranges
 
-  @assert length(ranges) == 2 "we support grids now only"
+  @assert length(ranges) == 2 "we support only 2D grids now"
   xpath, ypath = rangepaths
   xrange, yrange = ranges
 
@@ -78,10 +98,29 @@ function main()
     end
   end
   CSV.write(joinpath(workdir, "parameters_map.csv"), df)
+  CSV.write(joinpath(workdir, "jobdirs.txt"), select(df, :path), writeheader=false)
+
+  @info "generated $(nrow(df)) jobs"
 
   open(joinpath(workdir, "template.json"),"w") do f
     JSON.print(f, json, 2)
-  end 
+  end
+
+  write(joinpath(workdir, "script.sh"), make_job_script(abspath(workdir)))
+  num_jobs = nrow(df)
+
+  command = `qsub script.sh
+    -J 0-$num_jobs
+    -N G-$(basename(ARGS[1]))
+    -l walltime=48:00:00
+    -l select=1:ncpus=2:mem=8gb
+    -q "covid-19"
+    -o "$stdout-main.log"
+    -e "$stderr-main.log"
+  `
+
+  @info "executing command" command
+  run(command)
 
 end
 
