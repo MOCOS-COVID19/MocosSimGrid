@@ -58,10 +58,12 @@ cd "\${JOB_DIR}"
 
 mkdir -p output
 
-\\time -v $julia_path -O3 --threads 2 --project $launcher_path $(joinpath(launcher_path, "advanced_cli.jl"))"\\
+\\time -v $julia_path -O3 --threads 2 --project=$launcher_path \\
+  $(joinpath(launcher_path, "advanced_cli.jl")) \\
   --output-summary  output/summary.jld2 \\
-  1> "stdout.log" \\
-  2> "stderr.log"
+  params_experiment.json \\
+  1> "$(joinpath(cmd_dir, "stdout.log"))" \\
+  2> "$(joinpath(cmd_dir, "stderr.log"))"
 
 touch "_SUCCESS"
 """
@@ -111,13 +113,13 @@ function main()
 
   command = `qsub
     -J 0-$num_jobs
-    -N Julia-Grid
+    -N JG
     -l walltime=48:00:00
     -l select=1:ncpus=2:mem=8gb
     -q "covid-19"
     -o "stdout-main.log"
     -e "stderr-main.log"
-    script.sh
+    $(joinpath(workdir, "script.sh"))
   `
 
   @info "executing command" command
