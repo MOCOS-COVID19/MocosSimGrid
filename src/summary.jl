@@ -20,6 +20,7 @@ results = @showprogress pmap(output_dirs) do path
     load(joinpath(path, "summary.jld2"), "last_infections", "num_infections")
   catch e
     @warn "could not load summary" path
+    (NaN, NaN)
 end
 
 last_infections = getindex.(results, 1)
