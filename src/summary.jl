@@ -20,7 +20,7 @@ results = @showprogress pmap(output_dirs) do path
     load(joinpath(path, "summary.jld2"), "last_infections", "num_infections")
   catch e
     @warn "could not load summary" path
-    missing, missing
+    fill(missing, num_trajectories), fill(missing, num_trajectories)
   end
 end
 
@@ -34,6 +34,7 @@ save(joinpath(prefix_path,"summary.jld2"),
   "summary", df,
   "last_infections", last_infections,
   "num_infections", num_infections,
+  compress=true
 )
 
 save(joinpath(prefix_path,"summary.csv"), df)
