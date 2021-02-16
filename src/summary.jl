@@ -20,7 +20,7 @@ results = @showprogress pmap(output_dirs) do path
     load(joinpath(path, "summary.jld2"), "last_infections", "num_infections")
   catch e
     @warn "could not load summary" path
-    fill(missing, num_trajectories), fill(missing, num_trajectories)
+    fill(NaN, num_trajectories), fill(NaN, num_trajectories)
   end
 end
 
