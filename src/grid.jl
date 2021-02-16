@@ -62,8 +62,8 @@ mkdir -p output
   $(joinpath(launcher_path, "advanced_cli.jl")) \\
   --output-summary  output/summary.jld2 \\
   params_experiment.json \\
-  1> "$(joinpath(cmd_dir, "stdout.log"))" \\
-  2> "$(joinpath(cmd_dir, "stderr.log"))"
+  1> "JOB_DIR/stdout.log" \\
+  2> "JOB_DIR/stderr.log
 
 touch "_SUCCESS"
 """
