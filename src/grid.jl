@@ -122,7 +122,7 @@ function main()
     -J 0-$num_jobs
     -N JG
     -l walltime=48:00:00
-    -l select=1:ncpus=2:mem=8gb
+    -l select=1:ncpus=2:mem=12gb
     -q "covid-19"
     -o "stdout-main.log"
     -e "stderr-main.log"
