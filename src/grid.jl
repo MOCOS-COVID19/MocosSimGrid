@@ -46,11 +46,18 @@ function setbypath!(dict::AbstractDict{T} where T<:AbstractString, path::Path, v
   end
 end
 
-make_job_script(cmd_dir, julia_path="julia", launcher_path="/home/tomoz/MocosSimLauncher/")="""
+make_job_script(
+  cmd_dir::AbstractString,
+  julia_path::AbstractString="julia",
+  launcher_path::AbstractString="/home/tomoz/MocosSimLauncher/")="""
 #!/bin/bash
 set -Eeuxo pipefail
 
 cd $cmd_dir
+
+if test -f _SUCCESS; then
+  exit
+fi
 
 JOB_IDX=`expr \$PBS_ARRAY_INDEX + 1`
 JOB_DIR=`tail -n+"\${JOB_IDX}" jobdirs.txt | head -n1`

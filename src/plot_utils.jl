@@ -210,7 +210,7 @@ function plot_heatmap_mild_detection_vs_c(
       extendrange(reduction),
       extendrange(mild_detection_probs),
       results',
-      norm=matplotlib.colors.(vmin=cmin, vmax=cmax),
+      norm=matplotlib.colors.LogNorm(vmin=cmin, vmax=cmax),
       cmap="nipy_spectral")
       clim(vmin=cmin)
   else
