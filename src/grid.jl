@@ -55,8 +55,8 @@ set -Eeuxo pipefail
 
 cd $cmd_dir
 
-if test -f _SUCCESS; then
-  exit
+if test -f _SUCCESS ; then
+  exit 0
 fi
 
 JOB_IDX=`expr \$PBS_ARRAY_INDEX + 1`
@@ -72,7 +72,7 @@ mkdir -p output
   1> stdout.log \\
   2> stderr.log
 
-touch "_SUCCESS"
+touch _SUCCESS
 """
 
 function main()
@@ -122,10 +122,10 @@ function main()
     -J 0-$num_jobs
     -N JG
     -l walltime=48:00:00
-    -l select=1:ncpus=2:mem=12gb
+    -l select=1:ncpus=2:mem=16gb
     -q "covid-19"
-    -o "stdout-main.log"
-    -e "stderr-main.log"
+    -o "$(joinpath(workdir, "stdout-main.log"))"
+    -e "$(joinpath(workdir, "stderr-main.log"))"
     $(joinpath(workdir, "script.sh"))
   `
 
