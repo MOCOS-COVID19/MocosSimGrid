@@ -118,15 +118,14 @@ function main()
   write(joinpath(workdir, "script.sh"), make_job_script(abspath(workdir)))
   num_jobs = nrow(df)
 
+  cd(workdir)
   command = `qsub
     -J 0-$num_jobs
-    -N JG
+    -N "JG"
     -l walltime=48:00:00
     -l select=1:ncpus=2:mem=16gb
     -q "covid-19"
-    -o "$(joinpath(workdir, "stdout-main.log"))"
-    -e "$(joinpath(workdir, "stderr-main.log"))"
-    $(joinpath(workdir, "script.sh"))
+    script.sh
   `
 
   @info "executing command" command
