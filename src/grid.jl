@@ -46,9 +46,10 @@ function setbypath!(dict::AbstractDict{T} where T<:AbstractString, path::Path, v
   end
 end
 
-make_job_script(
+make_job_script(;
   cmd_dir::AbstractString,
-  cli::AbstractString
+  image_path::AbstractString,
+  julia_path::AbstractString="julia",
   )="""
 #!/bin/bash
 set -Eeuxo pipefail
@@ -63,10 +64,8 @@ JOB_IDX=`expr \$PBS_ARRAY_INDEX + 1`
 JOB_DIR=`tail -n+"\${JOB_IDX}" jobdirs.txt | head -n1`
 cd "\${JOB_DIR}"
 
-
 mkdir -p output
-
-$cli \\
+$julia_path -O3 --threads 2 -J $image_path -e 'MocosSimLauncher.launch(["params_experiment.json"])' \\
   --output-summary output/summary.jld2 \\
   params_experiment.json \\
   1> stdout.log \\
@@ -77,7 +76,7 @@ PID=\$!
 pidstat -r -p \$PID 1 > memory.log &
 pidstat -u -p \$PID 1 > cpu.log &
 
-if wait; then
+if wait \$PID; then
   touch _SUCCESS
 fi
 
@@ -125,9 +124,8 @@ function main()
   end
 
   launcher_path = "/home/tomoz/MocosSimLauncher/"
-  cli =  "julia -O3 --threads 2 -J $(joinpath(launcher_path, "sysimage.img")) $(joinpath(launcher_path, "advanced_cli.jl"))"
-
-  write(joinpath(workdir, "script.sh"), make_job_script(abspath(workdir),cli))
+  script = make_job_script(cmd_dir=abspath(workdir), image_path=joinpath(launcher_path, "sysimage.img"))
+  write(joinpath(workdir, "script.sh"), script)
   num_jobs = nrow(df)
 
   cd(workdir)
