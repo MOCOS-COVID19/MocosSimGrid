@@ -48,8 +48,8 @@ end
 
 make_job_script(
   cmd_dir::AbstractString,
-  julia_path::AbstractString="julia",
-  launcher_path::AbstractString="/home/tomoz/MocosSimLauncher/")="""
+  cli::AbstractString
+  )="""
 #!/bin/bash
 set -Eeuxo pipefail
 
@@ -63,16 +63,25 @@ JOB_IDX=`expr \$PBS_ARRAY_INDEX + 1`
 JOB_DIR=`tail -n+"\${JOB_IDX}" jobdirs.txt | head -n1`
 cd "\${JOB_DIR}"
 
+
 mkdir -p output
 
-\\time -v $julia_path -O3 --threads 2 --project=$launcher_path \\
-  $(joinpath(launcher_path, "advanced_cli.jl")) \\
-  --output-summary  output/summary.jld2 \\
+$cli \\
+  --output-summary output/summary.jld2 \\
   params_experiment.json \\
   1> stdout.log \\
-  2> stderr.log
+  2> stderr.log \\
+  &
 
-touch _SUCCESS
+PID=\$!
+pidstat -r -p \$PID 1 > memory.log &
+pidstat -u -p \$PID 1 > cpu.log &
+
+if wait; then
+  touch _SUCCESS
+fi
+
+
 """
 
 function main()
@@ -115,7 +124,10 @@ function main()
     JSON.print(f, json, 2)
   end
 
-  write(joinpath(workdir, "script.sh"), make_job_script(abspath(workdir)))
+  launcher_path = "/home/tomoz/MocosSimLauncher/"
+  cli =  "julia -O3 --threads 2 -J $(joinpath(launcher_path, "sysimage.img")) $(joinpath(launcher_path, "advanced_cli.jl"))"
+
+  write(joinpath(workdir, "script.sh"), make_job_script(abspath(workdir),cli))
   num_jobs = nrow(df)
 
   cd(workdir)
