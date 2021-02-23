@@ -65,9 +65,7 @@ JOB_DIR=`tail -n+"\${JOB_IDX}" jobdirs.txt | head -n1`
 cd "\${JOB_DIR}"
 
 mkdir -p output
-$julia_path -O3 --threads 2 -J $image_path -e 'MocosSimLauncher.launch(["params_experiment.json"])' \\
-  --output-summary output/summary.jld2 \\
-  params_experiment.json \\
+$julia_path -O3 --threads 2 -J $image_path -e 'MocosSimLauncher.launch(["params_experiment.json", "--output-summary", "output/summary.jld2"])' \\
   1> stdout.log \\
   2> stderr.log \\
   &
