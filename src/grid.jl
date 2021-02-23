@@ -56,12 +56,8 @@ set -Eeuxo pipefail
 
 cd $cmd_dir
 
-if test -f _SUCCESS ; then
-  exit 0
-fi
-
 JOB_IDX=`expr \$PBS_ARRAY_INDEX + 1`
-JOB_DIR=`tail -n+"\${JOB_IDX}" jobdirs.txt | head -n1`
+JOB_DIR=`head -n "\${JOB_IDX}" jobdirs.txt | tail -n1`
 cd "\${JOB_DIR}"
 
 mkdir -p output
@@ -74,11 +70,8 @@ PID=\$!
 pidstat -r -p \$PID 1 > memory.log &
 pidstat -u -p \$PID 1 > cpu.log &
 
-if wait \$PID; then
-  touch _SUCCESS
-fi
-
-
+wait \$PID
+touch _SUCCESS
 """
 
 function main()
