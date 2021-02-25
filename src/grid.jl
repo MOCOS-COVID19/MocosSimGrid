@@ -60,8 +60,13 @@ JOB_IDX=`expr \$PBS_ARRAY_INDEX + 1`
 JOB_DIR=`head -n "\${JOB_IDX}" jobdirs.txt | tail -n1`
 cd "\${JOB_DIR}"
 
+test -f _SUCCESS && exit(0)
+
 mkdir -p output
-$julia_path -O3 --threads 2 -J $image_path -e 'MocosSimLauncher.launch(["params_experiment.json", "--output-summary", "output/summary.jld2"])' \\
+
+\time -v \\
+  $julia_path -O3 --threads 2 -J $image_path \\
+  -e 'MocosSimLauncher.launch(["params_experiment.json", "--output-summary", "output/summary.jld2"])' \\
   1> stdout.log \\
   2> stderr.log \\
   &
@@ -70,8 +75,20 @@ PID=\$!
 pidstat -r -p \$PID 1 > memory.log &
 pidstat -u -p \$PID 1 > cpu.log &
 
-wait \$PID
-touch _SUCCESS
+if wait \$PID ; then
+  touch _SUCCESS
+else
+  \time -v \\
+  $julia_path -O3 --threads 2 -J $image_path \\
+  -e 'MocosSimLauncher.launch(["params_experiment.json", "--output-summary", "output/summary.jld2"])' \\
+  1> stdout2.log \\
+  2> stderr2.log \\
+  &
+
+  PID=\$!
+  pidstat -r -p \$PID 1 > memory2.log &
+  pidstat -u -p \$PID 1 > cpu2.log &
+fi
 """
 
 function main()
@@ -120,9 +137,8 @@ function main()
   num_jobs = nrow(df)
 
 
-
   cd(workdir)
-  mkdir("task-logs")
+  mkpath("task-logs")
   cd("task-logs")
 
   command = `qsub
