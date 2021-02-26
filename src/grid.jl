@@ -64,7 +64,7 @@ test -f _SUCCESS && exit 0
 
 mkdir -p output
 
-\time -v \\
+\\time -v \\
   $julia_path -O3 --threads 8 -J $image_path \\
   -e 'MocosSimLauncher.launch(["params_experiment.json", "--output-summary", "output/summary.jld2"])' \\
   1> stdout.log \\
@@ -80,7 +80,7 @@ if wait \$PID ; then
 fi
 
 
-\time -v \\
+\\time -v \\
 $julia_path -O3 --threads 8 -J $image_path \\
 -e 'MocosSimLauncher.launch(["params_experiment.json", "--output-summary", "output/summary.jld2"])' \\
 1> stdout2.log \\
