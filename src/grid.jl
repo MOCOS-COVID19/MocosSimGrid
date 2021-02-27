@@ -64,32 +64,18 @@ test -f _SUCCESS && exit 0
 
 mkdir -p output
 
-\\time -v \\
-  $julia_path -O3 --threads 8 -J $image_path \\
+\\time -v $julia_path -O3 --threads 8 -J $image_path \\
   -e 'MocosSimLauncher.launch(["params_experiment.json", "--output-summary", "output/summary.jld2"])' \\
   1> stdout.log \\
   2> stderr.log \\
   &
 
-PID=\$!
+PID=`pidof julia`
 pidstat -r -p \$PID 1 > memory.log &
 pidstat -u -p \$PID 1 > cpu.log &
 
-if wait \$PID ; then
-  touch _SUCCESS && exit 0
-fi
+wait \$PID && touch _SUCCESS && exit 0
 
-
-\\time -v \\
-$julia_path -O3 --threads 8 -J $image_path \\
--e 'MocosSimLauncher.launch(["params_experiment.json", "--output-summary", "output/summary.jld2"])' \\
-1> stdout2.log \\
-2> stderr2.log \\
-&
-
-PID=\$!
-pidstat -r -p \$PID 1 > memory2.log &
-pidstat -u -p \$PID 1 > cpu2.log &
 
 """
 
