@@ -50,6 +50,7 @@ make_job_script(;
   cmd_dir::AbstractString,
   image_path::AbstractString,
   julia_path::AbstractString="julia",
+  num_threads::Integer=1,
   )="""
 #!/bin/bash
 set -Eeuxo pipefail
@@ -64,18 +65,18 @@ test -f _SUCCESS && exit 0
 
 mkdir -p output
 
-\\time -v $julia_path -O3 --threads 8 -J $image_path \\
+$julia_path -O3 --threads $num_threads -J $image_path \\
   -e 'MocosSimLauncher.launch(["params_experiment.json", "--output-summary", "output/summary.jld2"])' \\
   1> stdout.log \\
   2> stderr.log \\
   &
 
-TIME_PID=\$!
-PID=`pidof julia`
-pidstat -r -p \$PID 1 > memory.log &
-pidstat -u -p \$PID 1 > cpu.log &
+JULIA_PID=\$!
+echo JULIA_PID=\$JULIA_PID
+pidstat -r -p \$JULIA_PID 1 > memory.log &
+pidstat -u -p \$JULIA_PID 1 > cpu.log &
 
-wait \$TIME_PID && touch _SUCCESS && exit 0
+wait \$JULIA_PID && touch _SUCCESS && exit 0
 
 
 """
@@ -84,7 +85,9 @@ function main()
   @assert length(ARGS) > 0 "JSON file needed"
 
   json = JSON.parsefile(ARGS[1], dicttype=OrderedDict)
-  workdir = length(ARGS)>1 ? ARGS[2] : splitext(ARGS[1])[1]
+  memory_gb = length(ARGS>1) ? ARGS[2] : 16
+  num_threads = length(ARGS) > 2 ? ARGS[3] : 1
+  workdir = length(ARGS)>3 ? ARGS[4] : splitext(ARGS[1])[1]
 
   rangepaths = findranges(json) |> sort
   ranges = map(x->getbypath(json, x) |> parserange, rangepaths)
@@ -125,6 +128,7 @@ function main()
   write(joinpath(workdir, "script.sh"), script)
   num_jobs = nrow(df)
 
+ 
 
   cd(workdir)
   mkpath("task-logs")
@@ -134,7 +138,7 @@ function main()
     -J 0-$num_jobs
     -N "JG"
     -l walltime=48:00:00
-    -l select=1:ncpus=8:mem=30gb
+    -l select=1:ncpus=$(num_threads):mem=$(mem_gb)gb
     -q "covid-19"
     ../script.sh
   `
