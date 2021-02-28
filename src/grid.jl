@@ -70,11 +70,12 @@ mkdir -p output
   2> stderr.log \\
   &
 
+TIME_PID=\$!
 PID=`pidof julia`
 pidstat -r -p \$PID 1 > memory.log &
 pidstat -u -p \$PID 1 > cpu.log &
 
-wait \$PID && touch _SUCCESS && exit 0
+wait \$TIME_PID && touch _SUCCESS && exit 0
 
 
 """
