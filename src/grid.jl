@@ -85,9 +85,9 @@ function main()
   @assert length(ARGS) > 0 "JSON file needed"
 
   json = JSON.parsefile(ARGS[1], dicttype=OrderedDict)
-  memory_gb = length(ARGS>1) ? ARGS[2] : 16
+  memory_gb = length(ARGS) > 1 ? ARGS[2] : 16
   num_threads = length(ARGS) > 2 ? ARGS[3] : 1
-  workdir = length(ARGS)>3 ? ARGS[4] : splitext(ARGS[1])[1]
+  workdir = length(ARGS) > 3 ? ARGS[4] : splitext(ARGS[1])[1]
 
   rangepaths = findranges(json) |> sort
   ranges = map(x->getbypath(json, x) |> parserange, rangepaths)
