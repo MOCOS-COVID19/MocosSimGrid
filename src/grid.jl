@@ -88,7 +88,7 @@ function main()
   memory_gb = length(ARGS) > 1 ? ARGS[2] : 16
   num_threads = length(ARGS) > 2 ? ARGS[3] : 1
   workdir = length(ARGS) > 3 ? ARGS[4] : splitext(ARGS[1])[1]
-  launcher_path = length(ARGS) > 4 ? ARGS[5] : "/home/tomoz/MocosSimLauncher/"
+  launcher_path = length(ARGS) > 4 ? ARGS[5] : "~/MocosSimLauncher/"
 
   rangepaths = findranges(json) |> sort
   ranges = map(x->getbypath(json, x) |> parserange, rangepaths)
