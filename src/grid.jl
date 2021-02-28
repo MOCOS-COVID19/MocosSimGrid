@@ -124,7 +124,7 @@ function main()
   end
 
   launcher_path = "/home/tomoz/MocosSimLauncher/"
-  script = make_job_script(cmd_dir=abspath(workdir), image_path=joinpath(launcher_path, "sysimage.img"))
+  script = make_job_script(cmd_dir=abspath(workdir), image_path=joinpath(launcher_path, "sysimage.img"), num_threads=num_threads)
   write(joinpath(workdir, "script.sh"), script)
   num_jobs = nrow(df)
 
@@ -138,7 +138,7 @@ function main()
     -J 0-$num_jobs
     -N "JG"
     -l walltime=48:00:00
-    -l select=1:ncpus=$(num_threads):mem=$(mem_gb)gb
+    -l select=1:ncpus=$(num_threads):mem=$(memory_gb)gb
     -q "covid-19"
     ../script.sh
   `
