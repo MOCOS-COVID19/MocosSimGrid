@@ -6,8 +6,16 @@ mystep(r::AbstractArray) = r[2] - r[1]
 
 extendrange(r) = range( (first(r)-mystep(r)/2), last(r)+mystep(r)/2, length=length(r)+1)
 
-function plot_heatmap_tracing_prob_vs_c(results, tracing_probs = 0:0.05:1, Cs=0:0.05:1; cmin=nothing, cmax=nothing, logscale=true, addcbar::Bool=true, polish::Bool=false)
-  #figure(figsize=(10,5))
+function plot_heatmap_tracing_prob_vs_c(
+  results,
+  tracing_probs = 0:0.05:1,
+  Cs=0:0.05:1;
+  cmin=nothing,
+  cmax=nothing,
+  logscale=true,
+  addcbar::Bool=true,
+  polish::Bool=false)
+
   reduction = 1 .- Cs / 1.35  |> collect
 
   if nothing == cmax
@@ -55,84 +63,9 @@ function plot_heatmap_tracing_prob_vs_c(results, tracing_probs = 0:0.05:1, Cs=0:
 
   gca().invert_yaxis()
   gca().invert_xaxis()
-  #savefig("tracking_heatmap_$title.png", bbox_inches="tight")
   img
 end
 
-function plot_heatmap_delay_vs_tracking_prob(
-    data_path::AbstractString,
-    image_path::AbstractString;
-    addcbar::Bool=true,
-    relative::Union{Nothing,Real}
-  )
-#  figure(figsize=(10,5))
-
-  data = load(data_path)
-
-  map::AbstractArray{T,2} where T<:Real = data["map"]'
-  if relative!==nothing
-    map /= relative
-  end
-
-
-  delays::AbstractVector{T} where T<:Real = data["delays"]
-  tracking_probs::AbstractVector{T} where T<:Real = data["tracking_probs"]
-  c::Real = data["c"]
-
-  pcolor(
-    extendrange(delays),
-    extendrange(tracking_probs),
-    map,
-    norm=matplotlib.colors.LogNorm(vmin=minimum(map), vmax=maximum(map)),
-    cmap="nipy_spectral"
-  )
-  #clim(vmin=10^2)
-
-  if addcbar
-    colorbar()
-  end
-  #title("Łączna liczba zarażonych dla redukcji kontaktów o $(100*(1-c/1.35))%")
-  xlabel("d - opóźnienie śledzenia w dniach")
-  ylabel("b - skuteczność śledzenia kontaktów")
-
-
-end
-
-function plot_heatmap_mild_detection_vs_tracking_prob(
-    data_path::AbstractString,
-    image_path::AbstractString
-  )
-  data = load(data_path)
-
-  map::AbstractArray{T,2} where T<:Real = data["map"]'
-
-  delay::Real = data["delay"]
-  c::Real = data["c"]
-
-  mild_detection_probs::AbstractVector{T} where T<:Real = data["mild_detection_probs"]
-  tracking_probs::AbstractVector{T} where T<:Real = data["tracking_probs"]
-
-  pcolor(
-    extendrange(mild_detection_probs),
-    extendrange(tracking_probs),
-    map,
-    norm=matplotlib.colors.LogNorm(vmin=minimum(map), vmax=maximum(map)),
-    cmap="nipy_spectral"
-  )
-  clim(vmin=10^2)
-
-  gca().invert_yaxis()
-  gca().invert_xaxis()
-
-  colorbar()
-  #title("Łączna liczba zarażonych \n dla redukcji kontaktów o $(100*(1-c/1.35))% \n i opóźnienia śledzenia kontaktów o $delay dni")
-  xlabel("prawdopodobieństwo wykrycia lekkich przypadków")
-  ylabel("b - skuteczność śledzenia kontaktów")
-
-  #xlim(minimum(mild_detection_probs), maximum(mild_detection_probs))
-  #ylim(minimum(tracking_probs), maximum(tracking_probs))
-  #savefig(image_path, bbox_inches="tight")
-end
 
 function plot_heatmap_mild_detection_vs_tracing_prob(
     results,
@@ -209,7 +142,7 @@ function plot_heatmap_mild_detection_vs_c(
     im = pcolor(
       extendrange(reduction),
       extendrange(mild_detection_probs),
-      results',
+      results,
       norm=matplotlib.colors.LogNorm(vmin=cmin, vmax=cmax),
       cmap="nipy_spectral")
       clim(vmin=cmin)
@@ -217,7 +150,7 @@ function plot_heatmap_mild_detection_vs_c(
     im = pcolor(
       extendrange(reduction),
       extendrange(mild_detection_probs),
-      results',
+      results,
       norm=matplotlib.colors.Normalize(vmin=cmin, vmax=cmax),
       cmap="nipy_spectral")
   end
@@ -225,18 +158,16 @@ function plot_heatmap_mild_detection_vs_c(
     c = colorbar()
   end
 
-  #xlabel("f - Stopień redukcji kontaktów")
-  xlabel("f - contact reduction rate")
-
-  xticks(
-    0:0.1:1,
-    ["$(100*f)%" for f in 0:0.1:1])
-
-  #ylabel("q' - Skuteczność wykrywania lekkich przypadków")
-  ylabel("q' - mild case detection probability")
-
   gca().invert_yaxis()
   gca().invert_xaxis()
+
+  if polish
+    xlabel("f - Stopień redukcji kontaktów")
+    ylabel("q' - Skuteczność wykrywania lekkich przypadków")
+  else
+    xlabel("f - contact reduction rate")
+    ylabel("q' - mild case detection probability")
+  end
 
   xticks(
     0:0.1:1,
@@ -246,47 +177,6 @@ function plot_heatmap_mild_detection_vs_c(
   im
 end
 
-function plot_heatmap_mild_detection_vs_c(
-    data_path::AbstractString,
-    image_path::AbstractString
-  )
-  data = load(data_path)
-
-  map::AbstractArray{T,2} where T<:Real = data["map"]'
-
-  delay::Real = data["delay"]
-  Cs::AbstractRange{T} where T<:Real = data["Cs"]
-  mild_detection_probs::AbstractRange{T} where T<:Real = data["mild_detection_probs"]
-  tracking_prob::Real = data["tracking_prob"]
-
-
-  reduction = 1 .- Cs / 1.35  |> collect
-  pcolormesh(
-    extendrange(reduction),
-    extendrange(mild_detection_probs),
-#reduction,
-#mild_detection_probs,
-    map,
-    norm=matplotlib.colors.LogNorm(vmin=minimum(map), vmax=maximum(map)),
-    cmap="nipy_spectral",
-    shading="gouraud"
-  )
-  clim(vmin=10^2)
-
-  colorbar()
-  title("Łączna liczba zarażonych \n dla śledzenia kontaktów z prawdopodobieństwem b=$(tracking_prob*100)% i opóźnieniem $delay dni")
-
-  xlabel("f stopień redukcji kontaktów")
-  xticks(
-    0.0:0.1:1,
-    ["$(100*f)%" for f in 0.0:0.1:1])
-  xticks(rotation=30)
-
-  ylabel("q' - prawdopodobieństwo wykrycia lekkich przypadków")
-  #xlim(minimum(mild_detection_probs), maximum(mild_detection_probs))
-  #ylim(minimum(tracking_probs), maximum(tracking_probs))
-  savefig(image_path, bbox_inches="tight")
-end
 
 function plot_heatmap_c_vs_phone_tracing_usage(results, Cs=0:0.05:1, phone_tracking_usage = 0:0.05:1; tlim=0.0001, cmin=nothing, cmax=nothing, logscale=true, addcbar::Bool=true, polish::Bool=false)
   reduction = 1 .- Cs / 1.35

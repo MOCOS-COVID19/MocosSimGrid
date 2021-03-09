@@ -88,6 +88,7 @@ function main()
   memory_gb = length(ARGS) > 1 ? ARGS[2] : 16
   num_threads = length(ARGS) > 2 ? ARGS[3] : 1
   workdir = length(ARGS) > 3 ? ARGS[4] : splitext(ARGS[1])[1]
+  jobname = basename(workdir)
 
   rangepaths = findranges(json) |> sort
   ranges = map(x->getbypath(json, x) |> parserange, rangepaths)
@@ -128,15 +129,13 @@ function main()
   write(joinpath(workdir, "script.sh"), script)
   num_jobs = nrow(df)
 
- 
-
   cd(workdir)
   mkpath("task-logs")
   cd("task-logs")
 
   command = `qsub
     -J 0-$num_jobs
-    -N "JG"
+    -N $jobname
     -l walltime=48:00:00
     -l select=1:ncpus=$(num_threads):mem=$(memory_gb)gb
     -q "covid-19"
