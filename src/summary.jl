@@ -17,7 +17,7 @@ output_dirs = map( x-> joinpath(prefix_path, x, "output"), df.path)
 
 results = @showprogress pmap(output_dirs) do path
   try
-    load(joinpath(path, "summary.jld2"), "last_infections", "num_infections")
+    load(joinpath(path, "summary.jld2"), "last_infections", "num_infections", "peak_daily_detections", "peak_daily_infections")
   catch e
     @warn "could not load summary" path
     fill(NaN, num_trajectories), fill(NaN, num_trajectories)
@@ -26,6 +26,8 @@ end
 
 last_infections = getindex.(results, 1)
 num_infections = getindex.(results, 2)
+peak_daily_detections = getindex.(results, 3)
+peak_daily_infections = getindex.(results, 4)
 
 df.mean_last_infection_time = last_infections .|> mean
 df.mean_num_infected = num_infections .|> mean
@@ -34,6 +36,8 @@ save(joinpath(prefix_path,"summary.jld2"),
   "summary", df,
   "last_infections", last_infections,
   "num_infections", num_infections,
+  "peak_daily_detections", peak_daily_detections,
+  "peak_daily_infections", peak_daily_infections,
   compress=true
 )
 
