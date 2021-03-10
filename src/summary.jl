@@ -14,13 +14,14 @@ num_trajectories = length(ARGS)==2 ? parse(Int, ARGS[2]) : 1000
 
 df = CSV.read(joinpath(prefix_path, "parameters_map.csv"), DataFrame)
 output_dirs = map( x-> joinpath(prefix_path, x, "output"), df.path)
+nans = fill(NaN, num_trajectories)
 
 results = @showprogress pmap(output_dirs) do path
   try
     load(joinpath(path, "summary.jld2"), "last_infections", "num_infections", "peak_daily_detections", "peak_daily_infections")
   catch e
     @warn "could not load summary" path
-    fill(NaN, num_trajectories), fill(NaN, num_trajectories)
+    nans, nans, nans, nans
   end
 end
 
