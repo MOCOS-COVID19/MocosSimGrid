@@ -31,6 +31,8 @@ peak_daily_infections = getindex.(results, 4)
 
 df.mean_last_infection_time = last_infections .|> mean
 df.mean_num_infected = num_infections .|> mean
+df.peak_daily_detections = peak_daily_detections .|> mean
+df.peak_daily_infections = peak_daily_infections .|> mean
 
 save(joinpath(prefix_path,"summary.jld2"),
   "summary", df,
